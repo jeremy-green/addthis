@@ -1,0 +1,250 @@
+<?php
+/**
+* Permissions for the form module
+* @return array permissions array
+*/
+function addthis_permission() {
+  return array(
+    'administer addthis' => array(
+      'title' => t('Administer Addthis Message Settings'),
+      'description' => t('Edit the Addthis message settings.'),
+    ),
+  );
+}
+
+/**
+* Implementation of hook_menu().
+*/
+function addthis_menu() {
+  $items = array();
+
+  //base link to admin settings
+  $items['admin/config/user-interface/addthis'] = array(
+    'title' => 'Addthis Settings',
+    'description' => 'Edit the Addthis settings.',
+    'access arguments' => array('administer addthis'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('addthis_settings'),
+  );
+  return $items;
+}
+
+function addthis_settings() {
+  drupal_add_js(drupal_get_path('module', 'addthis') . '/js/admin.js');
+
+  $settings = variable_get('addthis_settings', array());
+
+  $form = array();
+  $form['#tree'] = TRUE;
+  $form['addthis_settings']['addthis_id'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Addthis ID'),
+    '#description' => t(''),
+    '#default_value' => _addthis_get_default_setting($settings, 'addthis_id'),
+    '#maxlength' => 255,
+    '#required' => TRUE
+  );
+
+  /*
+  $form['addthis_settings']['use_follow'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Follow'),
+    '#description' => t(''),
+    '#default_value' => _addthis_get_default_setting($settings, 'use_follow')
+  );
+  */
+
+  $form['addthis_settings']['use_layers'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Layers'),
+    '#description' => t(''),
+    '#default_value' => _addthis_get_default_setting($settings, 'use_layers')
+  );
+  $form['addthis_settings']['layers'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Layer Settings')
+  );
+  $form['addthis_settings']['layers']['position'] = array(
+    '#type' => 'radios',
+    '#title' => t('Position'),
+    '#description' => t(''),
+    '#default_value' => _addthis_get_default_setting($settings['layers'], 'position', 'left'),
+    '#options' => array(
+      'left' => 'Left',
+      'right' => 'Right'
+    )
+  );
+  $form['addthis_settings']['layers']['buttons'] = array(
+    '#type' => 'select',
+    '#title' => t('Buttons'),
+    '#description' => t(''),
+    '#default_value' => _addthis_get_default_setting($settings['layers'], 'buttons'),
+    '#options' => array(
+      1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5, 6 => 6
+    )
+  );
+  $form['addthis_settings']['layers']['theme'] = array(
+    '#type' => 'select',
+    '#title' => t('Theme'),
+    '#description' => t(''),
+    '#default_value' => _addthis_get_default_setting($settings['layers'], 'theme'),
+    '#options' => array(
+      'transparent' => 'Transparent',
+      'light' => 'Light',
+      'gray' => 'Gray',
+      'dark' => 'Dark'
+    )
+  );
+  $form['addthis_settings']['layers']['share'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Share'),
+    '#description' => t(''),
+    '#default_value' => _addthis_get_default_setting($settings['layers'], 'share'),
+  );
+  $form['addthis_settings']['layers']['next'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('What\'s Next'),
+    '#default_value' => _addthis_get_default_setting($settings['layers'], 'next'),
+  );
+  $form['addthis_settings']['layers']['recommended'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Recommended'),
+    '#default_value' => _addthis_get_default_setting($settings['layers'], 'recommended'),
+  );
+
+  $form['addthis_settings']['layers']['use_social'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Follow'),
+    '#description' => t(''),
+    '#default_value' => _addthis_get_default_setting($settings['layers'], 'use_social'),
+  );
+  $form['addthis_settings']['layers']['social'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Layer Settings')
+  );
+  $form['addthis_settings']['layers']['social']['facebook'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Facebook Profile'),
+    '#description' => t(''),
+    '#default_value' => _addthis_get_default_setting($settings['layers']['social'], 'facebook'),
+    '#maxlength' => 255
+  );
+  $form['addthis_settings']['layers']['social']['twitter'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Twitter Profile'),
+    '#description' => t(''),
+    '#default_value' => _addthis_get_default_setting($settings['layers']['social'], 'twitter'),
+    '#maxlength' => 255
+  );
+  $form['addthis_settings']['layers']['social']['linkedin'] = array(
+    '#type' => 'textfield',
+    '#title' => t('LinkedIn Profile'),
+    '#description' => t(''),
+    '#default_value' => _addthis_get_default_setting($settings['layers']['social'], 'linkedin'),
+    '#maxlength' => 255
+  );
+  $form['addthis_settings']['layers']['social']['google_follow'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Google+ Profile'),
+    '#description' => t(''),
+    '#default_value' => _addthis_get_default_setting($settings['layers']['social'], 'google_follow'),
+    '#maxlength' => 255
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Save Configuration',
+  );
+  return $form;
+}
+
+function addthis_settings_submit(&$form, &$form_state) {
+  $values = $form_state['values'];
+  variable_set('addthis_settings', $values['addthis_settings']);
+  drupal_set_message('Your settings have been saved.');
+}
+
+function addthis_preprocess_html(&$vars) {
+  if (!path_is_admin(current_path())) {
+    $settings = variable_get('addthis_settings', array());
+      _addthis_get_widget($settings['addthis_id']);
+    if ($settings['use_layers']) {
+      _addthis_get_layers($settings);
+    }
+  }
+}
+
+function _addthis_get_default_setting($settings, $setting, $default_value = FALSE) {
+  return !empty($settings[$setting]) ? $settings[$setting] : $default_value;
+}
+
+function _addthis_get_widget($addthis_id) {
+  drupal_add_js('http://s7.addthis.com/js/300/addthis_widget.js#pubid=' . $addthis_id, 'external');
+}
+
+function _addthis_get_layers($settings) {
+  drupal_add_js(_addthis_build_layers($settings), array('type' => 'inline', 'scope' => 'footer'));
+}
+
+function _addthis_build_layers($settings) {
+  $addthis_id = $settings['addthis_id'];
+
+  $buttons = $settings['layers']['buttons'];
+
+  $service = _addthis_format_services($settings['layers']);
+
+  $theme = $settings['layers']['theme'];
+
+  $other_obj = array(
+    _addthis_format_obj($settings['layers']['next'], 'whatsnext'),
+    _addthis_format_obj($settings['layers']['recommended'], 'recommended')
+  );
+
+  $other_string = implode(',' . PHP_EOL, array_filter($other_obj));
+  $position = $settings['layers']['position'];
+
+  $layers = <<<EOF
+      addthis.layers({
+        'theme' : '$theme',
+        'share' : {
+          'position' : '$position',
+          'numPreferredServices' : $buttons
+        },
+        $service
+        $other_string
+      });
+EOF;
+
+  return $layers;
+}
+
+function _addthis_format_obj($value, $prop) {
+  return (int)$value ? '\'' . $prop . '\' : {}' : '';
+}
+
+function _addthis_format_services($layers) {
+  $service = '';
+  $social_ids = array_filter($layers['social']);
+  if ($layers['use_social']) {
+    $service .= '
+      \'follow\': {
+        \'services\' : [
+    ';
+
+    $services = array();
+    foreach ($social_ids as $key => $value) {
+      $services[] = _addthis_format_service($key, $value);
+    }
+
+    $service .= implode($services, ',' . PHP_EOL);
+    $service .= '
+        ]
+      },
+    ';
+  }
+  return $service;
+}
+
+function _addthis_format_service($key, $value) {
+  return '{\'service\': \'' . $key . '\', \'id\': \'' . $value . '\'}';
+}
