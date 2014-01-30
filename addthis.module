@@ -202,14 +202,21 @@ function _addthis_build_layers($settings) {
 
   $other_string = implode(',' . PHP_EOL, array_filter($other_obj));
   $position = $settings['layers']['position'];
+  
+  if (!empty($settings['layers']['share'])) {
+    $share = "
+    'share' : {
+      'position' : '$position',
+      'numPreferredServices' : $buttons
+    },
+    ";
+  }
+
 
   $layers = <<<EOF
       addthis.layers({
         'theme' : '$theme',
-        'share' : {
-          'position' : '$position',
-          'numPreferredServices' : $buttons
-        },
+        $share
         $service
         $other_string
       });
