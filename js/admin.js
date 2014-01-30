@@ -14,7 +14,6 @@
   // To understand behaviors, see https://drupal.org/node/756722#behaviors
   Drupal.behaviors.addthis = {
     attach: function(context, settings) {
-      console.log(context, settings);
       var $this;
 
       $(document).ready(function() {
